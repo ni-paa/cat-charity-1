@@ -33,7 +33,9 @@ async def process_investment(session: AsyncSession) -> None:
                 break
 
             # Считаем сколько осталось инвестировать
-            donation_remaining = donation.full_amount - donation.invested_amount
+            donation_remaining = (
+                donation.full_amount - donation.invested_amount
+            )
             project_remaining = project.full_amount - project.invested_amount
 
             # Определяем сумму инвестиции
