@@ -1,9 +1,11 @@
 from datetime import datetime
 from http import HTTPStatus  # ← Добавлен импорт
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.db import get_async_session
 from app.models.charity_project import CharityProject
 from app.schemas.charity_project import (
