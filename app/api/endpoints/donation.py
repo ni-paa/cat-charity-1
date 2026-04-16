@@ -17,10 +17,10 @@ async def get_all_donations(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Показать список всех пожертвований."""
-    result = await session.execute(
+    result_all_donations = await session.execute(
         select(Donation).order_by(Donation.create_date)
     )
-    return result.scalars().all()
+    return result_all_donations.scalars().all()
 
 
 @router.post('/', response_model=DonationDB)

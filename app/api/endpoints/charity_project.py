@@ -1,10 +1,9 @@
 from datetime import datetime
+from http import HTTPStatus  # ← Добавлен импорт
 from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.db import get_async_session
 from app.models.charity_project import CharityProject
 from app.schemas.charity_project import (
@@ -22,10 +21,10 @@ async def get_all_charity_projects(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Показать список всех целевых проектов."""
-    result = await session.execute(
+    result_all_project = await session.execute(
         select(CharityProject).order_by(CharityProject.create_date)
     )
-    return result.scalars().all()
+    return result_all_project.scalars().all()
 
 
 @router.post('/', response_model=CharityProjectDB)
@@ -40,10 +39,9 @@ async def create_charity_project(
     )
     if result.scalars().first():
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail='Проект с таким именем уже существует!',
         )
-
     project = CharityProject(
         name=project_in.name,
         description=project_in.description,
@@ -69,11 +67,13 @@ async def update_charity_project(
     """Редактировать целевой проект."""
     project = await session.get(CharityProject, project_id)
     if not project:
-        raise HTTPException(status_code=404, detail='Проект не найден')
-
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Проект не найден'
+        )
     if project.fully_invested:
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail='Закрытый проект нельзя редактировать!',
         )
 
@@ -87,7 +87,7 @@ async def update_charity_project(
         )
         if result.scalars().first():
             raise HTTPException(
-                status_code=400,
+                status_code=HTTPStatus.BAD_REQUEST,
                 detail='Проект с таким именем уже существует!',
             )
 
@@ -97,7 +97,7 @@ async def update_charity_project(
         and project_in.full_amount < project.invested_amount
     ):
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail=(
                 'Нелья установить значение full_amount '
                 'меньше уже вложенной суммы.'
@@ -130,11 +130,13 @@ async def delete_charity_project(
     """Удалить целевой проект."""
     project = await session.get(CharityProject, project_id)
     if not project:
-        raise HTTPException(status_code=404, detail='Проект не найден')
-
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Проект не найден'
+        )
     if project.invested_amount > 0:
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail=(
                 'В проект были внесены средства, не подлежит удалению!'
             ),
